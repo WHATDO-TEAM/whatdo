@@ -1,0 +1,19 @@
+FROM python:3.11.9
+
+WORKDIR /app
+
+# requirements.txt만 먼저 복사하고 설치
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+# 나머지 파일들 복사
+COPY . .
+
+EXPOSE 8501
+
+# streamlit의 기본 설정 추가 (선택사항)
+ENV STREAMLIT_SERVER_PORT=8501
+ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
+
+ENTRYPOINT ["streamlit", "run"]
+CMD ["front.py"]

@@ -1,0 +1,47 @@
+version: '3.8'
+services:
+  frontend:
+    build:
+      context: ./app
+      dockerfile: Dockerfile-streamlit
+    image: frontend
+    ports:
+      - "8501:8501"
+    depends_on:
+      - backend
+    volumes:
+      - ./app:/app
+    restart: always
+    networks:
+      - app
+    container_name: frontend
+
+  backend:
+    build:
+      context: ./app
+      dockerfile: Dockerfile-fastapi
+    image: backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app
+    restart: always
+    networks:
+      - app
+    container_name: backend
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - 9200:9200
+    networks:
+      - app
+
+networks:
+  app:
+    driver: bridge
