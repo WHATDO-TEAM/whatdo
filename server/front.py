@@ -17,6 +17,26 @@ def get_recommendations(room_name: str):
         st.error(f"추천 시스템 오류: {str(e)}")
         return []
 
+def save_to_elasticsearch(room_name: str, visitor_cnt: int, selected_items: list):
+    """선택된 항목을 ElasticSearch에 저장하는 함수"""
+    try:
+        response = requests.post(
+            f"{fastapi_url}/save_selection",
+            json={
+                "room_name": room_name,
+                "visitor_cnt": visitor_cnt,
+                "selected_items": selected_items
+            }
+        )
+        if response.status_code == 200:
+            return True
+        else:
+            st.error("데이터 저장 중 오류가 발생했습니다.")
+            return False
+    except Exception as e:
+        st.error(f"저장 중 오류 발생: {str(e)}")
+        return False
+
 st.title("방 번호 데이터 및 추천 시스템")
 
 # 세션 상태 초기화
@@ -29,10 +49,14 @@ if 'selection_complete' not in st.session_state:
 if 'selected_menu' not in st.session_state:
     st.session_state.selected_menu = []
 
-def complete_selection(selected):
+def complete_selection(selected, room_name, visitor_cnt):
     st.session_state.selected_menu = selected
-    st.session_state.show_recommendations = False
-    st.session_state.selection_complete = True
+    # ElasticSearch에 데이터 저장
+    if save_to_elasticsearch(room_name, visitor_cnt, selected):
+        st.session_state.show_recommendations = False
+        st.session_state.selection_complete = True
+        return True
+    return False
 
 # 입력 필드
 room_name = st.text_input("방 번호를 입력하세요 (예: 2507)")
@@ -74,9 +98,9 @@ if st.session_state.show_recommendations:
                             ]
 
                             if selected:
-                                complete_selection(selected)
-                                st.session_state.show_recommendations = False
-                                st.rerun()
+                                if complete_selection(selected, room_name, visitor_cnt):
+                                    st.success("선택이 저장되었습니다!")
+                                    st.rerun()
                             else:
                                 st.warning("선택된 메뉴가 없습니다. 하나 이상의 메뉴를 선택해주세요.")
 
