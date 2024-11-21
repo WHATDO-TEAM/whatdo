@@ -1,6 +1,12 @@
 [maxscale]
 threads=auto  # MaxScale이 사용할 스레드 수를 자동으로 설정
 
+# 로깅 설정
+log_info=1
+log_warning=1
+log_notice=1
+log_debug=0
+
 [Galera-Monitor]
 type=monitor
 module=galeramon
@@ -31,3 +37,10 @@ type=listener
 service=MaxAdmin-Service
 protocol=maxscaled
 socket=default
+
+# 보안 설정
+admin_auth=1
+admin_log_auth_failures=1
+
+# 네트워크 설정
+network_timeout=300
