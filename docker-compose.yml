@@ -9,6 +9,12 @@ x-common-variables: &common-variables
     - ./mariadb/galera.cnf:/etc/mysql/conf.d/galera.cnf
   networks:
     - galera-network
+  restart: always
+  healthcheck:
+    test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+    interval: 30s
+    timeout: 10s
+    retries: 5
 
 services:
   mariadb1:
@@ -47,6 +53,16 @@ services:
       - "8989:8989"  # MaxScale 관리
     networks:
       - galera-network
+    depends_on:
+      - mariadb1
+      - mariadb2
+      - mariadb3
+    restart: always
+    healthcheck:
+      test: ["CMD", "maxctrl", "list", "servers"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 volumes:
   mariadb1_data:
