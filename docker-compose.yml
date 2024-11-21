@@ -1,66 +1,112 @@
-version: '3'
+version: '3.8'
 
 x-common-variables: &common-variables
-  image: mariadb:10.5
+  image: mariadb:latest
   environment:
-    MYSQL_ROOT_PASSWORD: rootpassword
-    MYSQL_DATABASE: mydb
-  volumes:
-    - ./mariadb/galera.cnf:/etc/mysql/conf.d/galera.cnf
+    - MYSQL_ROOT_PASSWORD=rootpass
+    - MYSQL_USER=maxscale
+    - MYSQL_PASSWORD=maxpass
+    - MYSQL_DATABASE=mydb
   networks:
     - galera-network
-  restart: always
   healthcheck:
-    test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-    interval: 30s
-    timeout: 10s
-    retries: 5
+    test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpass"]
+    interval: 10s
+    timeout: 5s
+    retries: 3
+    start_period: 30s
+  ulimits:
+    nofile:
+      soft: 65536
+      hard: 65536
+  restart: unless-stopped
 
 services:
   mariadb1:
     <<: *common-variables
     container_name: mariadb1
+    command: --wsrep-new-cluster
     volumes:
       - mariadb1_data:/var/lib/mysql
-    command: --wsrep-new-cluster
+      - ./galera/galera.cnf:/etc/mysql/conf.d/galera.cnf
+    ports:
+      - "3306:3306"
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
 
   mariadb2:
     <<: *common-variables
     container_name: mariadb2
     volumes:
       - mariadb2_data:/var/lib/mysql
-    command: --wsrep-new-cluster
+      - ./galera/galera.cnf:/etc/mysql/conf.d/galera.cnf
     depends_on:
-      - mariadb1
+      mariadb1:
+        condition: service_healthy
 
   mariadb3:
     <<: *common-variables
     container_name: mariadb3
     volumes:
       - mariadb3_data:/var/lib/mysql
+      - ./galera/galera.cnf:/etc/mysql/conf.d/galera.cnf
     depends_on:
-      - mariadb1
-      - mariadb2
+      mariadb1:
+        condition: service_healthy
+      mariadb2:
+        condition: service_healthy
 
   maxscale:
     image: mariadb/maxscale:latest
     container_name: maxscale
+    environment:
+      - MAX_THREADS=auto
+      - MAX_LISTENERS=auto
     volumes:
       - ./maxscale/maxscale.cnf:/etc/maxscale.cnf
     ports:
-      - "4006:4006"  # MaxScale 서비스
-      - "8989:8989"  # MaxScale 관리
+      - "4006:4006"
+      - "8989:8989"
     networks:
       - galera-network
     depends_on:
-      - mariadb1
-      - mariadb2
-      - mariadb3
+      mariadb1:
+        condition: service_healthy
+      mariadb2:
+        condition: service_healthy
+      mariadb3:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "maxadmin", "show", "services"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
 
 volumes:
   mariadb1_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/mariadb1
   mariadb2_data:
+    driver: local
   mariadb3_data:
+    driver: local
 
 networks:
   galera-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16

@@ -1,28 +1,59 @@
 [mysqld]
-binlog_format=ROW                                   # 바이너리 로그 형식을 ROW 형식으로 지정 (Galera)
-default-storage-engine=innodb                       # 기본 스토리지 엔진을 InnoDB로 설정
-innodb_autoinc_lock_mode=2                          # 자동 증가 락 모드 설정 (2=인터리브드)
-bind-address=0.0.0.0                                # 모든 네트워크 인터페이스에서 접속 허용
+# 기본 MySQL 설정
+binlog_format=ROW
+default-storage-engine=innodb
+innodb_autoinc_lock_mode=2
+bind-address=0.0.0.0
+innodb_buffer_pool_load_at_startup=OFF
+innodb_buffer_pool_dump_at_shutdown=OFF
+performance_schema=OFF
 
-# Provider 설정
-wsrep_on=ON                                         # Galera 클러스터링 활성화
-wsrep_provider=/usr/lib/galera/libgalera_smm.so     # Galera 라이브러리 경로 지정
+# Galera Provider 설정
+wsrep_on=ON
+wsrep_provider=/usr/lib/galera/libgalera_smm.so
+wsrep_provider_options="gcache.size=1G;gcs.fc_limit=128;gcs.fc_factor=0.8"
 
 # Cluster 설정
-wsrep_cluster_name="galera_cluster"                         # 클러스터의 논리적 이름
-wsrep_cluster_address="gcomm://mariadb1,mariadb2,mariadb3"  # 클러스터 멤버 노드 목록
+wsrep_cluster_name="galera_cluster"
+wsrep_cluster_address="gcomm://mariadb1,mariadb2,mariadb3"
 
-# 동기화 설정
-wsrep_sst_method=rsync              # State Snapshot Transfer 방식을 rsync로 지정
+# State Transfer 설정
+wsrep_sst_method=mariabackup
+wsrep_sst_auth=sst_user:sst_password
 
 # 노드 설정
-wsrep_node_address="mariadb1"       # 현재 노드의 IP 주소 또는 호스트명
-wsrep_node_name="mariadb1"          # 현재 노드의 논리적 이름
+wsrep_node_address="mariadb1"
+wsrep_node_name="mariadb1"
 
-# 성능 향상
-innodb_flush_log_at_trx_commit=0    # 성능 향상을 위해 트랜잭션 커밋 시 로그 플러시 비활성화
-innodb_buffer_pool_size=1G          # InnoDB 버퍼 풀 크기 설정
-innodb_log_file_size=256M           # InnoDB 로그 파일 크기 설정
+# 복제 및 일관성 설정
+wsrep_sync_wait=1
+wsrep_retry_autocommit=3
+wsrep_max_ws_rows=131072
+wsrep_max_ws_size=1G
+wsrep_load_data_splitting=ON
+
+# InnoDB 설정
+innodb_flush_log_at_trx_commit=1
+innodb_buffer_pool_size=4G
+innodb_log_file_size=1G
+innodb_file_per_table=ON
+innodb_flush_method=O_DIRECT
+innodb_io_capacity=1000
+innodb_io_capacity_max=2000
+
+# 성능 최적화
+innodb_flush_neighbors=0
+innodb_read_io_threads=8
+innodb_write_io_threads=8
+innodb_doublewrite=1
 
 # 보안 설정
-skip_name_resolve                   # DNS 이름 해석 비활성화 (보안 및 성능 향상)
+skip_name_resolve
+max_connections=1000
+max_allowed_packet=64M
+
+# 로깅 설정
+log_error=/var/log/mysql/error.log
+slow_query_log=1
+slow_query_log_file=/var/log/mysql/slow.log
+long_query_time=2

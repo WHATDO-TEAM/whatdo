@@ -1,19 +1,10 @@
-[maxscale]
-threads=auto  # MaxScale이 사용할 스레드 수를 자동으로 설정
-
-# 로깅 설정
-log_info=1
-log_warning=1
-log_notice=1
-log_debug=0
-
 [Galera-Monitor]
 type=monitor
 module=galeramon
 servers=mariadb1,mariadb2,mariadb3
 user=maxscale
 password=maxscale_password
-monitor_interval=2000  # 모니터링 주기(밀리초)
+monitor_interval=2000
 
 [Galera-Service]
 type=service
@@ -21,12 +12,15 @@ router=readwritesplit
 servers=mariadb1,mariadb2,mariadb3
 user=maxscale
 password=maxscale_password
+router_options=slave_selection_criteria=LEAST_CURRENT_OPERATIONS
+monitor=Galera-Monitor
 
 [Galera-Listener]
 type=listener
 service=Galera-Service
 protocol=MariaDBClient
 port=4006
+address=0.0.0.0
 
 [MaxAdmin-Service]
 type=service
@@ -37,10 +31,3 @@ type=listener
 service=MaxAdmin-Service
 protocol=maxscaled
 socket=default
-
-# 보안 설정
-admin_auth=1
-admin_log_auth_failures=1
-
-# 네트워크 설정
-network_timeout=300
