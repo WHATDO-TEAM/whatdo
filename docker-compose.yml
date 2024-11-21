@@ -38,7 +38,6 @@ services:
     container_name: mariadb3
     volumes:
       - mariadb3_data:/var/lib/mysql
-    command: --wsrep-new-cluster
     depends_on:
       - mariadb1
       - mariadb2
@@ -57,12 +56,6 @@ services:
       - mariadb1
       - mariadb2
       - mariadb3
-    restart: always
-    healthcheck:
-      test: ["CMD", "maxctrl", "list", "servers"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
 
 volumes:
   mariadb1_data:
