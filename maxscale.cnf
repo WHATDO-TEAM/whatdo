@@ -1,33 +1,33 @@
 [maxscale]
-threads=auto                            # MaxScale이 사용할 스레드 수를 자동으로 설정
+threads=auto  # MaxScale이 사용할 스레드 수를 자동으로 설정
 
 [Galera-Monitor]
-type=monitor                             # 모니터 타입 설정
-module=galeramon                         # Galera 클러스터 모니터링 모듈 사용
-servers=mariadb1,mariadb2,mariadb3       # 모니터링할 서버 목록
-user=maxscale                            # 모니터링용 사용자 계정
-password=maxscale_password               # 모니터링용 계정 비밀번호
-monitor_interval=2000                    # 모니터링 주기(밀리초)
+type=monitor
+module=galeramon
+servers=mariadb1,mariadb2,mariadb3
+user=maxscale
+password=maxscale_password
+monitor_interval=2000  # 모니터링 주기(밀리초)
 
 [Galera-Service]
-type=service                            # 서비스 타입 정의
-router=readwritesplit                   # 읽기/쓰기 분리 라우터 사용
-servers=mariadb1,mariadb2,mariadb3      # 서비스에 포함될 서버
-user=maxscale                           # 서비스용 사용자 계정
-password=maxscale_password              # 서비스용 계정 비밀번호
+type=service
+router=readwritesplit
+servers=mariadb1,mariadb2,mariadb3
+user=maxscale
+password=maxscale_password
 
 [Galera-Listener]
-type=listener                           # 리스너 타입 정의
-service=Galera-Service                  # 연결할 서비스 지정
-protocol=MariaDBClient                  # MariaDB 클라이언트 프로토콜 사용
-port=4006                               # 리스너가 사용할 포트
+type=listener
+service=Galera-Service
+protocol=MariaDBClient
+port=4006
 
 [MaxAdmin-Service]
-type=service                            # 서비스 타입 정의
-router=cli                              # 명령줄 인터페이스 라우터 사용
+type=service
+router=cli
 
 [MaxAdmin-Listener]
-type=listener                           # 리스너 타입 정의
-service=MaxAdmin-Service                # 연결할 서비스 지정
-protocol=maxscaled                      # MaxScale 관리 프로토콜 사용
-socket=default                          # 기본 소켓 사용
+type=listener
+service=MaxAdmin-Service
+protocol=maxscaled
+socket=default

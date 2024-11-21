@@ -1,46 +1,38 @@
 version: '3'
 
+x-common-variables: &common-variables
+  image: mariadb:10.5
+  environment:
+    MYSQL_ROOT_PASSWORD: rootpassword
+    MYSQL_DATABASE: mydb
+  volumes:
+    - ./mariadb/galera.cnf:/etc/mysql/conf.d/galera.cnf
+  networks:
+    - galera-network
+
 services:
   mariadb1:
-    image: mariadb:10.5
+    <<: *common-variables
     container_name: mariadb1
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: mydb
     volumes:
-      - ./mariadb/galera.cnf:/etc/mysql/conf.d/galera.cnf
       - mariadb1_data:/var/lib/mysql
     command: --wsrep-new-cluster
-    networks:
-      - galera-network
 
   mariadb2:
-    image: mariadb:10.5
+    <<: *common-variables
     container_name: mariadb2
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: mydb
     volumes:
-      - ./mariadb/galera.cnf:/etc/mysql/conf.d/galera.cnf
       - mariadb2_data:/var/lib/mysql
     command: --wsrep-new-cluster
-    networks:
-      - galera-network
     depends_on:
       - mariadb1
 
   mariadb3:
-    image: mariadb:10.5
+    <<: *common-variables
     container_name: mariadb3
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: mydb
     volumes:
-      - ./mariadb/galera.cnf:/etc/mysql/conf.d/galera.cnf
-      - mariadb3_data:/var/lib/mysql 
+      - mariadb3_data:/var/lib/mysql
     command: --wsrep-new-cluster
-    networks:
-      - galera-network
     depends_on:
       - mariadb1
       - mariadb2
@@ -55,24 +47,11 @@ services:
       - "8989:8989"  # MaxScale 관리
     networks:
       - galera-network
-    depends_on:
-      - mariadb1
-      - mariadb2
-      - mariadb3
-
-  adminer:
-    image: adminer
-    container_name: adminer
-    ports:
-      - "8080:8080"
-    networks:
-      - galera-network
-
-networks:
-  galera-network:
-    driver: bridge
 
 volumes:
   mariadb1_data:
-  mariadb2_data:    
-  mariadb3_data:    
+  mariadb2_data:
+  mariadb3_data:
+
+networks:
+  galera-network:
