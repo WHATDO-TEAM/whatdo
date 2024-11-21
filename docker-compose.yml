@@ -1,0 +1,78 @@
+version: '3'
+
+services:
+  mariadb1:
+    image: mariadb:10.5
+    container_name: mariadb1
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydb
+    volumes:
+      - ./mariadb/galera.cnf:/etc/mysql/conf.d/galera.cnf
+      - mariadb1_data:/var/lib/mysql
+    command: --wsrep-new-cluster
+    networks:
+      - galera-network
+
+  mariadb2:
+    image: mariadb:10.5
+    container_name: mariadb2
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydb
+    volumes:
+      - ./mariadb/galera.cnf:/etc/mysql/conf.d/galera.cnf
+      - mariadb2_data:/var/lib/mysql
+    command: --wsrep-new-cluster
+    networks:
+      - galera-network
+    depends_on:
+      - mariadb1
+
+  mariadb3:
+    image: mariadb:10.5
+    container_name: mariadb3
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydb
+    volumes:
+      - ./mariadb/galera.cnf:/etc/mysql/conf.d/galera.cnf
+      - mariadb3_data:/var/lib/mysql 
+    command: --wsrep-new-cluster
+    networks:
+      - galera-network
+    depends_on:
+      - mariadb1
+      - mariadb2
+
+  maxscale:
+    image: mariadb/maxscale:latest
+    container_name: maxscale
+    volumes:
+      - ./maxscale/maxscale.cnf:/etc/maxscale.cnf
+    ports:
+      - "4006:4006"  # MaxScale 서비스
+      - "8989:8989"  # MaxScale 관리
+    networks:
+      - galera-network
+    depends_on:
+      - mariadb1
+      - mariadb2
+      - mariadb3
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    ports:
+      - "8080:8080"
+    networks:
+      - galera-network
+
+networks:
+  galera-network:
+    driver: bridge
+
+volumes:
+  mariadb1_data:
+  mariadb2_data:    
+  mariadb3_data:    
