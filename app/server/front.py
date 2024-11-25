@@ -17,7 +17,7 @@ def get_recommendations(room_name: str):
         st.error(f"추천 시스템 오류: {str(e)}")
         return []
 
-def save_to_elasticsearch(room_name: str, visitor_cnt: int, selected_items: list):
+def save_to_elasticsearch(room_name: str, visitor_cnt: int, selected_items: list, event_type: str):
     """선택된 항목을 ElasticSearch에 저장하는 함수"""
     try:
         response = requests.post(
@@ -25,7 +25,8 @@ def save_to_elasticsearch(room_name: str, visitor_cnt: int, selected_items: list
             json={
                 "room_name": room_name,
                 "visitor_cnt": visitor_cnt,
-                "selected_items": selected_items
+                "selected_items": selected_items,
+                "event_type": event_type  # 이벤트 타입 추가
             }
         )
         if response.status_code == 200:
@@ -37,7 +38,7 @@ def save_to_elasticsearch(room_name: str, visitor_cnt: int, selected_items: list
         st.error(f"저장 중 오류 발생: {str(e)}")
         return False
 
-st.title("방 번호 데이터 및 추천 시스템")
+st.title("방 번호 추천 시스템 ")
 
 # 세션 상태 초기화
 if 'selected_items' not in st.session_state:
@@ -51,10 +52,18 @@ if 'selected_menu' not in st.session_state:
 
 def complete_selection(selected, room_name, visitor_cnt):
     st.session_state.selected_menu = selected
-    # ElasticSearch에 데이터 저장
-    if save_to_elasticsearch(room_name, visitor_cnt, selected):
+    # ElasticSearch에 데이터 저장 - 추천 선택 이벤트
+    if save_to_elasticsearch(room_name, visitor_cnt, selected, "추천 선택"):
         st.session_state.show_recommendations = False
         st.session_state.selection_complete = True
+        return True
+    return False
+
+def cancel_recommendation(room_name, visitor_cnt):
+    # ElasticSearch에 추천 취소 이벤트 저장
+    if save_to_elasticsearch(room_name, visitor_cnt, [], "추천 취소"):
+        st.session_state.show_recommendations = False
+        st.session_state.selection_complete = False
         return True
     return False
 
@@ -105,12 +114,13 @@ if st.session_state.show_recommendations:
                                 st.warning("선택된 메뉴가 없습니다. 하나 이상의 메뉴를 선택해주세요.")
 
                     with col2:
-                        # 추천 닫기 버튼
-                        if st.button("추천 닫기"):
-                            st.session_state.show_recommendations = False
-                            st.session_state.selection_complete = False
-                            st.info("추천을 취소합니다.")
-                            st.rerun()
+                        # 추천 취소 버튼
+                        if st.button("추천 취소"):
+                            if cancel_recommendation(room_name, visitor_cnt):
+                                st.info("추천이 취소되었습니다.")
+                                st.session_state.show_recommendations = False
+                                st.session_state.selection_complete = False
+                                st.rerun()
 
             else:
                 st.info("추천 가능한 메뉴가 없습니다.")

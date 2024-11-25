@@ -1,0 +1,26 @@
+# github repository actions 페이지에 나타날 이름 
+name: CI/CD using github actions & docker 
+
+#event trigger 
+#gyeom-server 브랜치에 push가 되었을 때 실행 
+on: 
+  push:
+    branches:["gyeom-server"]
+
+
+jobs: 
+  deploy:
+    runs-on: ubuntu-latests
+    steps:
+    - name: checkout code
+      uses: actions/checkout@v3
+
+    - name: deploy to Ec2
+      uses: appleboy/ssh-action@master # ssh 접속 
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script:
+          cd /home/ubuntu/whatdo
+          git pull
