@@ -19,7 +19,7 @@ jobs:
       uses: appleboy/ssh-action@master # ssh 접속 
       with:
         host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
+        username: ${{ secrets.EC2_NAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script:
           cd /home/ubuntu/whatdo
