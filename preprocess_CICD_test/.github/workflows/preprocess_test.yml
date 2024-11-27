@@ -1,0 +1,28 @@
+name: Data Preprocessing and Loading
+
+on:
+  push:
+    branches:
+      - action-test-01  # action-test-01 브랜치에 push할 때 트리거
+
+jobs:
+  preprocess-and-load:
+    runs-on: self-hosted  # self-hosted runner에서 실행
+    steps:
+      # 1. 코드 체크아웃
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Docker 이미지를 빌드
+      - name: Build Docker image
+        run: |
+          docker build -t preprocessing-job .
+
+      # 3. Docker 컨테이너 실행
+      - name: Run Docker container
+        run: |
+          docker run --rm preprocessing-job
+      - name: Run a multi-line script
+        run: |
+          echo Add other actions to build,
+          echo test, and deploy your project.
