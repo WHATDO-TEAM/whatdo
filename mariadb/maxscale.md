@@ -55,10 +55,9 @@ FLUSH PRIVILEGES;
 GRANT ALL PRIVILEGES ON wemeet.* TO 'maxscale'@'%' IDENTIFIED BY 'password';
 FLUSH PRIVILEGES;
 
-```
 
 SELECT User, Host FROM mysql.user;
-
+```
 
 ### Maxscale서버(Maxscale설정)
 ```
