@@ -131,4 +131,4 @@ sudo firewall-cmd --add-port=3306/tcp --permanent
 sudo firewall-cmd --reload
 sudo firewall-cmd --list-ports
 
-
+sudo systemctl restart mariadb

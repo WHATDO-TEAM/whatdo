@@ -54,7 +54,7 @@ sudo ufw reload
 sudo ufw status verbose
 
 
-#1번서버
+#1번서버#
 sudo galera_new_cluster
 
 
